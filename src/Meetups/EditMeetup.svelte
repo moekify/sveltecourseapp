@@ -51,7 +51,7 @@
     descriptionValid;
 
   function submitForm() {
-    const meetupdata = {
+    const meetupData = {
       title: title,
       subtitle: subtitle,
       description: description,
@@ -60,12 +60,31 @@
       contactEmail: email
     };
 
-  if (id) {
-    meetups.updateMeetup(id, meetupdata)
-
-  } else {
-    meetups.addMeetup(meetupdata);
-  }
+    if (id) {
+      meetups.updateMeetup(id, meetupData);
+    } else {
+      fetch(process.env.FIREBASE_URL + "meetups.json", {
+        method: "POST",
+        body: JSON.stringify({ ...meetupData, isFavorite: false }),
+        headers: { "Content-Type": "application/json" }
+      })
+        .then(res => {
+          if (!res.ok) {
+            throw new Error("An error occured, please try again!");
+          }
+          return res.json();
+        })
+        .then(data => {
+          meetups.addMeetup({
+            ...meetupData,
+            isFavorite: false,
+            id: data.name
+          });
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    }
     dispatch("save");
   }
 
@@ -138,7 +157,7 @@
       Save
     </Button>
     {#if id}
-       <Button type="button" on:click={deleteMeetup}>Delete</Button>
+      <Button type="button" on:click={deleteMeetup}>Delete</Button>
     {/if}
   </div>
 </Modal>
